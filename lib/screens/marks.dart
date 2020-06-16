@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'marksheet.dart';
 import 'package:vitask/constants.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 
 class Marks extends StatefulWidget {
   Marks(this.marks);
@@ -25,8 +24,8 @@ class _MarksState extends State<Marks> {
   }
 
   void getData() {
-    courses = widget.marks["Marks"].keys.toList();
-    mark = widget.marks["Marks"].values.toList();
+    courses = widget.marks['marks'].keys.toList();
+    mark = widget.marks['marks'].values.toList();
 
     marele = [];
     var num = 0;

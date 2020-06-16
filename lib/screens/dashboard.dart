@@ -24,6 +24,7 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:intl/intl.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'dart:async';
+import 'bunk_meter.dart';
 
 class MenuDashboardPage extends StatefulWidget {
   MenuDashboardPage(
@@ -47,14 +48,16 @@ class MenuDashboardPage extends StatefulWidget {
 GlobalWidget k = GlobalWidget();
 
 class _MenuDashboardPageState extends State<MenuDashboardPage> {
+  Map<String, dynamic> nextMarks;
+  Map<String, dynamic> nextAttendance;
   String avgAttendance;
   Map<String, String> attDetails = {};
   Map<String, double> pie = {};
   List<String> a, days, hours;
-  List<dynamic> tt, tt1;
+  List<dynamic> tt, tt1, attKeys;
   List<DateTime> time, timeNotifications;
   var now;
-  int count, h, g;
+  int count, h, g, theory, labs;
   bool refresh = false;
   var regNo, token, pass;
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
@@ -82,18 +85,38 @@ class _MenuDashboardPageState extends State<MenuDashboardPage> {
   }
 
   void getAttendance() async {
+    attKeys = widget.attendanceData["attendance"].keys.toList();
     CalculateAttendance cal =
         CalculateAttendance(widget.attendanceData, widget.profileData["RegNo"]);
-    a = cal.attendanceDetails();
-    attDetails["Total"] = a[0];
-    attDetails["Attended"] = a[1];
-    attDetails["Percentage"] = a[2];
-    pie["Present"] = double.parse(a[2]);
-    pie["Absent"] = 100 - double.parse(a[2]);
+    setState(() {
+      a = cal.attendanceDetails();
+      attDetails["Total"] = a[0];
+      attDetails["Attended"] = a[1];
+      attDetails["Percentage"] = a[2];
+      pie["Present"] = double.parse(a[2]);
+      pie["Absent"] = 100 - double.parse(a[2]);
+    });
   }
 
   void setValue() {
     h = 1;
+  }
+
+  void getSlots() {
+    if (now.weekday < 6) {
+      labs = 0;
+      theory = 0;
+      for (var j = 0;
+          j < widget.timeTableData["timetable"][days[now.weekday - 1]].length;
+          j++) {
+        tt1.add({"startTime": "xx"});
+        if (tt[j]["slot"].contains("L"))
+          labs++;
+        else
+          theory++;
+      }
+      labs = labs ~/ 2;
+    }
   }
 
   void getTimeTable() {
@@ -111,7 +134,7 @@ class _MenuDashboardPageState extends State<MenuDashboardPage> {
     tt1 = [];
     timeNotifications = [];
     if (now.weekday < 6) {
-      tt = widget.timeTableData["Timetable"][days[now.weekday - 1]];
+      tt = widget.timeTableData["timetable"][days[now.weekday - 1]];
       for (var j = 0; j < tt.length; j++) {
         tt1.add({"startTime": "xx"});
       }
@@ -159,6 +182,7 @@ class _MenuDashboardPageState extends State<MenuDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    getSlots();
     h = 1;
     return SafeArea(
       child: ModalProgressHUD(
@@ -198,7 +222,6 @@ class _MenuDashboardPageState extends State<MenuDashboardPage> {
                       },
                     );
                     API api = API();
-
                     String t = widget.profileData['APItoken'].toString();
                     regNo = widget.profileData["RegNo"];
                     pass = widget.password;
@@ -210,15 +233,19 @@ class _MenuDashboardPageState extends State<MenuDashboardPage> {
                     String url = 'http://134.209.150.24/api/vtop/sync';
                     Map<String, dynamic> newData =
                         await api.getAPIData(url, data);
-                    String u = widget.profileData['RegNo'].toString();
-                    Map<String, dynamic> newAttendanceData =
-                        newData["Attendance"];
-                    if (newAttendanceData != null)
-                      widget.attendanceData = newAttendanceData;
                     print('Classes');
-                    Map<String, dynamic> newMarksData = newData["Marks"];
-                    if (newMarksData != null) widget.marksData = newMarksData;
                     print('Marks');
+                    Map<String, dynamic> newAtt = {};
+                    newAtt["attendance"] = newData["attendance"];
+                    Map<String, dynamic> newMarks = {};
+                    newMarks["marks"] = newData["marks"];
+                    if (newAtt != null) {
+                      widget.attendanceData = newAtt;
+                    }
+                    if (newMarks != null) {
+                      widget.marksData = newMarks;
+                    }
+                    String u = widget.profileData['RegNo'].toString();
                     Student student = Student(
                         profileKey: (u + "-profile"),
                         profile: widget.profileData,
@@ -314,12 +341,54 @@ class _MenuDashboardPageState extends State<MenuDashboardPage> {
                       //Divider(color: Colors.grey),
                     ],
                   ),
-                  Container(
-                      padding: EdgeInsets.symmetric(vertical: 1),
-                      child: Texts(
-                          days[now.weekday - 1].toString() + " - TimeTable",
-                          20)),
-                  // /SizedBox(height: 10),
+                  Column(
+                    children: <Widget>[
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 1),
+                        child: Texts(
+                            days[now.weekday - 1].toString() + " - TimeTable",
+                            20),
+                      ),
+                      SizedBox(height: 10),
+                      now.weekday < 6
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Row(
+                                  children: <Widget>[
+                                    Container(
+                                      child: Texts(
+                                          theory.toString() + " Theory ", 15),
+                                    ),
+                                    Icon(
+                                      FontAwesomeIcons.bookOpen,
+                                      size: 16,
+                                      color: Colors.lightBlue,
+                                    ),
+                                    Row(
+                                      children: <Widget>[
+                                        Container(
+                                          child: Texts(
+                                              "  |  " +
+                                                  labs.toString() +
+                                                  " Lab(s) ",
+                                              15),
+                                        ),
+                                        Icon(
+                                          FontAwesomeIcons.laptopCode,
+                                          size: 16,
+                                          color: Colors.lightBlue,
+                                        ),
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ],
+                            )
+                          : Container()
+                    ],
+                  ),
+                  SizedBox(height: 10),
                   Expanded(
                     flex: 2,
                     child: Container(
@@ -329,20 +398,50 @@ class _MenuDashboardPageState extends State<MenuDashboardPage> {
                       child: SingleChildScrollView(
                           child: Column(
                         children: tt.map((e) {
+                          List<Map<String, dynamic>> bunk = [];
                           if (now.weekday < 6) {
                             if (count < timeNotifications.length)
                               scheduleNotification(timeNotifications[count++],
                                   e["courseName"], e["startTime"], e["class"]);
                             var att = 80;
                             for (var i = 0;
-                                i < widget.attendanceData["Attended"].length;
+                                i < widget.attendanceData["attendance"].length;
                                 i++) {
-                              if (widget.attendanceData["Attended"][i]
-                                      ["courseName"] ==
-                                  e["courseName"]) {
-                                att = widget.attendanceData["Attended"][i]
-                                    ["percentage"];
-                                break;
+                              var slot = e["slot"];
+                              if (slot.contains("L")) {
+                                if (widget.attendanceData["attendance"]
+                                            [attKeys[i]]["courseName"] ==
+                                        e["courseName"] &&
+                                    (widget.attendanceData["attendance"]
+                                                [attKeys[i]]["type"]
+                                            .contains("Lab") ||
+                                        widget.attendanceData["attendance"]
+                                                [attKeys[i]]["type"]
+                                            .contains("Soft"))) {
+                                  Map<String, dynamic> bu = widget
+                                      .attendanceData["attendance"][attKeys[i]];
+                                  bunk.add(bu);
+                                  att = widget.attendanceData["attendance"]
+                                      [attKeys[i]]["percentage"];
+                                  break;
+                                }
+                              } else {
+                                if (widget.attendanceData["attendance"]
+                                            [attKeys[i]]["courseName"] ==
+                                        e["courseName"] &&
+                                    (widget.attendanceData["attendance"]
+                                                [attKeys[i]]["type"]
+                                            .contains("Theory") ||
+                                        widget.attendanceData["attendance"]
+                                                [attKeys[i]]["type"]
+                                            .contains("Soft"))) {
+                                  Map<String, dynamic> bu = widget
+                                      .attendanceData["attendance"][attKeys[i]];
+                                  bunk.add(bu);
+                                  att = widget.attendanceData["attendance"]
+                                      [attKeys[i]]["percentage"];
+                                  break;
+                                }
                               }
                             }
                             var color1 = Colors.blue[800];
@@ -354,92 +453,105 @@ class _MenuDashboardPageState extends State<MenuDashboardPage> {
                               color1 = Colors.red[900];
                               color2 = Colors.red[300];
                             }
-                            return Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: color1,
-                                ),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(20)),
-                              ),
-                              padding: EdgeInsets.all(10),
-                              margin: EdgeInsets.only(bottom: 5, top: 5),
-                              child: Column(
-                                children: <Widget>[
-                                  Card(
-                                    color: Colors.transparent,
-                                    elevation: 0,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: <Widget>[
-                                        Expanded(
-                                          flex: 1,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: <Widget>[
-                                              Texts(
-                                                  e["code"] +
-                                                      " - " +
-                                                      e["courseName"],
-                                                  16),
-                                              SizedBox(height: 10),
-                                              Row(
-                                                children: <Widget>[
-                                                  Icon(
-                                                      FontAwesomeIcons
-                                                          .mapMarkerAlt,
-                                                      size: 16,
-                                                      color: color1),
-                                                  SizedBox(width: 5),
-                                                  Texts(e["class"], 14),
-                                                ],
-                                              ),
-                                              SizedBox(height: 8),
-                                              Row(
-                                                children: <Widget>[
-                                                  Icon(FontAwesomeIcons.clock,
-                                                      size: 16, color: color1),
-                                                  SizedBox(width: 5),
-                                                  Texts(
-                                                      e["startTime"] +
-                                                          " - " +
-                                                          e["endTime"],
-                                                      14),
-                                                ],
-                                              ),
-                                              SizedBox(height: 8),
-                                              Row(
-                                                children: <Widget>[
-                                                  Icon(FontAwesomeIcons.tag,
-                                                      size: 16, color: color1),
-                                                  SizedBox(width: 8),
-                                                  Texts(e["slot"], 14),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-//                                        SizedBox(width: 20),
-                                        CircularPercentIndicator(
-                                          animationDuration: 900,
-                                          radius: 90.0,
-                                          lineWidth: 6.0,
-                                          percent:
-                                              double.parse(att.toString()) /
-                                                  100,
-                                          center:
-                                              Texts(att.toString() + "%", 15),
-                                          progressColor: color1,
-                                          backgroundColor: color2,
-                                          circularStrokeCap:
-                                              CircularStrokeCap.round,
-                                        )
-                                      ],
-                                    ),
+                            return MaterialButton(
+                              padding: EdgeInsets.all(0),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BunkMeter(bunk, 0),
                                   ),
-                                ],
+                                );
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: color1,
+                                  ),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(20)),
+                                ),
+                                padding: EdgeInsets.all(10),
+                                margin: EdgeInsets.only(bottom: 5, top: 5),
+                                child: Column(
+                                  children: <Widget>[
+                                    Card(
+                                      color: Colors.transparent,
+                                      elevation: 0,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: <Widget>[
+                                          Expanded(
+                                            flex: 1,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: <Widget>[
+                                                Texts(
+                                                    e["code"] +
+                                                        " - " +
+                                                        e["courseName"],
+                                                    16),
+                                                SizedBox(height: 10),
+                                                Row(
+                                                  children: <Widget>[
+                                                    Icon(
+                                                        FontAwesomeIcons
+                                                            .mapMarkerAlt,
+                                                        size: 16,
+                                                        color: color1),
+                                                    SizedBox(width: 5),
+                                                    Texts(e["class"], 14),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 8),
+                                                Row(
+                                                  children: <Widget>[
+                                                    Icon(FontAwesomeIcons.clock,
+                                                        size: 16,
+                                                        color: color1),
+                                                    SizedBox(width: 5),
+                                                    Texts(
+                                                        e["startTime"] +
+                                                            " - " +
+                                                            e["endTime"],
+                                                        14),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 8),
+                                                Row(
+                                                  children: <Widget>[
+                                                    Icon(FontAwesomeIcons.tag,
+                                                        size: 16,
+                                                        color: color1),
+                                                    SizedBox(width: 8),
+                                                    Texts(e["slot"], 14),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+//                                        SizedBox(width: 20),
+                                          CircularPercentIndicator(
+                                            animationDuration: 900,
+                                            radius: 90.0,
+                                            lineWidth: 6.0,
+                                            percent:
+                                                double.parse(att.toString()) /
+                                                    100,
+                                            center:
+                                                Texts(att.toString() + "%", 15),
+                                            progressColor: color1,
+                                            backgroundColor: color2,
+                                            circularStrokeCap:
+                                                CircularStrokeCap.round,
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
                           } else if (h == 1) {
@@ -506,12 +618,7 @@ class _MenuDashboardPageState extends State<MenuDashboardPage> {
                                         },
                                         minWidth: 200.0,
                                         height: 42.0,
-                                        child: Text(
-                                          'Proceed To Moodle',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                          ),
-                                        ),
+                                        child: Texts('Proceed To Moodle', 12),
                                       )),
                                 ),
                                 SizedBox(height: 12),

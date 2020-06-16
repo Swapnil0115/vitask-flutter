@@ -16,6 +16,7 @@ class TimeTable extends StatefulWidget {
 class _TimeTableState extends State<TimeTable> {
   List<String> days;
   List<dynamic> daylist;
+  var attKeys;
 
   List<DayList> dayele = [];
 
@@ -26,10 +27,11 @@ class _TimeTableState extends State<TimeTable> {
   }
 
   void getData() {
+    attKeys = widget.attendanceData["attendance"].keys.toList();
     daylist = [];
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
     for (var i = 0; i < days.length; i++) {
-      daylist.add(widget.timeTableData["Timetable"][days[i]]);
+      daylist.add(widget.timeTableData["timetable"][days[i]]);
     }
     dayele = [];
     var num = 0;
@@ -40,13 +42,13 @@ class _TimeTableState extends State<TimeTable> {
   }
 
   Widget minimar(List<dynamic> list) {
-    var codes = [];
-    var loc = [];
-    var courseName = [];
-    var endTime = [];
-    var startTime = [];
-    var slot = [];
-    var attendance = [];
+    var codes = [],
+        loc = [],
+        courseName = [],
+        endTime = [],
+        startTime = [],
+        slot = [],
+        attendance = [];
     List<Info> exeele = [];
 
     var num = 0;
@@ -58,12 +60,33 @@ class _TimeTableState extends State<TimeTable> {
       endTime.add(list[num]["endTime"]);
       startTime.add(list[num]["startTime"]);
       slot.add(list[num]["slot"]);
-      for (var i = 0; i < widget.attendanceData["Attended"].length; i++) {
-        if (widget.attendanceData["Attended"][i]["courseName"] ==
-            list[num]["courseName"]) {
-          attendance.add(
-              widget.attendanceData["Attended"][i]["percentage"].toString());
-          break;
+
+      for (var i = 0; i < widget.attendanceData["attendance"].length; i++) {
+        var slot = list[num]["slot"];
+        if (slot.contains("L")) {
+          if (widget.attendanceData["attendance"][attKeys[i]]["courseName"] ==
+                  list[num]["courseName"] &&
+              (widget.attendanceData["attendance"][attKeys[i]]["type"]
+                      .contains("Lab") ||
+                  widget.attendanceData["attendance"][attKeys[i]]["type"]
+                      .contains("Soft"))) {
+            attendance.add(widget.attendanceData["attendance"][attKeys[i]]
+                    ["percentage"]
+                .toString());
+            break;
+          }
+        } else {
+          if (widget.attendanceData["attendance"][attKeys[i]]["courseName"] ==
+                  list[num]["courseName"] &&
+              (widget.attendanceData["attendance"][attKeys[i]]["type"]
+                      .contains("Theory") ||
+                  widget.attendanceData["attendance"][attKeys[i]]["type"]
+                      .contains("Soft"))) {
+            attendance.add(widget.attendanceData["attendance"][attKeys[i]]
+                    ["percentage"]
+                .toString());
+            break;
+          }
         }
       }
       num++;
