@@ -29,7 +29,7 @@ class _TimeTableState extends State<TimeTable> {
   void getData() {
     attKeys = widget.attendanceData["attendance"].keys.toList();
     daylist = [];
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     for (var i = 0; i < days.length; i++) {
       daylist.add(widget.timeTableData["timetable"][days[i]]);
     }
@@ -81,7 +81,9 @@ class _TimeTableState extends State<TimeTable> {
               (widget.attendanceData["attendance"][attKeys[i]]["type"]
                       .contains("Theory") ||
                   widget.attendanceData["attendance"][attKeys[i]]["type"]
-                      .contains("Soft"))) {
+                      .contains("Soft") ||
+                  !widget.attendanceData["attendance"][attKeys[i]]["type"]
+                      .contains("Lab"))) {
             attendance.add(widget.attendanceData["attendance"][attKeys[i]]
                     ["percentage"]
                 .toString());
