@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vitask/Widgets/linear_gradient.dart';
 import 'tt.dart';
 import 'package:vitask/constants.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -29,10 +30,11 @@ class _TimeTableState extends State<TimeTable> {
   void getData() {
     attKeys = widget.attendanceData["attendance"].keys.toList();
     daylist = [];
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
     for (var i = 0; i < days.length; i++) {
       daylist.add(widget.timeTableData["timetable"][days[i]]);
     }
+    print(daylist[0]);
     dayele = [];
     var num = 0;
     while (num < days.length) {
@@ -106,12 +108,13 @@ class _TimeTableState extends State<TimeTable> {
       n++;
     }
 
-    return Container(
-        child: SingleChildScrollView(
+    return SingleChildScrollView(
+        child: Container(
             child: Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: exeele.map((e) {
         return Container(
-          margin: EdgeInsets.all(8),
+          margin: EdgeInsets.symmetric(horizontal: 5, vertical: 4),
           padding: EdgeInsets.all(9),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(20)),
@@ -249,136 +252,159 @@ class _TimeTableState extends State<TimeTable> {
     )));
   }
 
+  int _selectedIndex = 0;
+
   @override
   Widget build(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
+    List<Widget> _widgetOptions = listView(context, dayele);
     double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
     return SafeArea(
       child: Scaffold(
         body: Container(
-          decoration: BoxDecoration(
-              gradient: LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                  colors: [
-                Color.fromRGBO(13, 50, 77, 100),
-                Color.fromRGBO(0, 0, 10, 10)
-              ])),
-          child: CustomScrollView(
-            slivers: <Widget>[
-              SliverAppBar(
-                //centerTitle: true,
-                backgroundColor: Colors.transparent,
-                expandedHeight: 10,
-                //centerTitle: true,
-                floating: true,
-                pinned: false,
-                title: Text(
-                  "Timetable",
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Container(
-                  //height of the main box
-                  height: height,
-                  padding: EdgeInsets.all(9),
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: dayele.map(
-                      (mr) {
-                        int labs = 0;
-                        int theory = 0;
-                        for (var i = 0; i < mr.list.length; i++) {
-                          if ((mr.list[i]["slot"]).contains("L")) {
-                            labs++;
-                          } else {
-                            theory++;
-                          }
-                        }
-                        labs = labs ~/ 2;
-                        return Container(
-                          width: width,
-                          child: Stack(
-                            children: <Widget>[
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 20),
-                                child: Align(
-                                  alignment: Alignment.topLeft,
-                                  child: Text(
-                                    mr.day,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontStyle: FontStyle.italic,
-                                      color: Colors.white,
-                                      fontSize: 24,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                top: 33,
-                                child: Row(
-                                  children: <Widget>[
-                                    Row(
-                                      children: <Widget>[
-                                        Container(
-                                          padding: EdgeInsets.only(
-                                              left: 20, right: 5),
-                                          child: Texts(
-                                              theory.toString() + " Theory ",
-                                              15),
-                                        ),
-                                        Icon(
-                                          FontAwesomeIcons.bookOpen,
-                                          size: 16,
-                                          color: Colors.lightBlue,
-                                        ),
-                                        Row(
-                                          children: <Widget>[
-                                            Container(
-                                              padding: EdgeInsets.only(
-                                                  left: 5, right: 5),
-                                              child: Texts(
-                                                  "  |  " +
-                                                      labs.toString() +
-                                                      " Lab(s) ",
-                                                  15),
-                                            ),
-                                            Icon(
-                                              FontAwesomeIcons.laptopCode,
-                                              size: 16,
-                                              color: Colors.lightBlue,
-                                            ),
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Positioned(
-                                top: 41,
-                                right: 10,
-                                child: Container(
-                                  padding: EdgeInsets.all(15),
-                                  height: height / 1.2,
-                                  width: width,
-                                  child: minimar(mr.list),
-                                ),
-                              ),
-                            ],
-                            overflow: Overflow.visible,
-                          ),
-                        );
-                      },
-                    ).toList(),
-                  ),
-                ),
-              ),
-            ],
+          decoration: BoxDecoration(gradient: gradient()),
+          child: Container(
+            height: height,
+            width: width,
+            padding: EdgeInsets.all(9),
+            child: _widgetOptions.elementAt(_selectedIndex),
           ),
+        ),
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text('TimeTable'),
+          backgroundColor: Color.fromRGBO(13, 50, 77, 100),
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.shifting,
+          backgroundColor: Color.fromRGBO(13, 50, 77, 100),
+          items: <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              backgroundColor: Color.fromRGBO(4, 30, 53, 100),
+              icon: Icon(FontAwesomeIcons.calendar),
+              title: Text('Mon'),
+            ),
+            BottomNavigationBarItem(
+              backgroundColor: Color.fromRGBO(4, 30, 53, 100),
+              icon: Icon(FontAwesomeIcons.calendar),
+              title: Text('Tue'),
+            ),
+            BottomNavigationBarItem(
+              backgroundColor: Color.fromRGBO(4, 30, 53, 100),
+              icon: Icon(FontAwesomeIcons.calendar),
+              title: Text('Wed'),
+            ),
+            BottomNavigationBarItem(
+              backgroundColor: Color.fromRGBO(4, 30, 53, 100),
+              icon: Icon(FontAwesomeIcons.calendar),
+              title: Text('Thu'),
+            ),
+            BottomNavigationBarItem(
+              backgroundColor: Color.fromRGBO(4, 30, 53, 100),
+              icon: Icon(FontAwesomeIcons.calendar),
+              title: Text('Fri'),
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.blueAccent,
+          onTap: _onItemTapped,
         ),
       ),
     );
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  List<Widget> listView(BuildContext context, List<DayList> dayele) {
+    double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height;
+    return dayele.map(
+      (mr) {
+        int labs = 0;
+        int theory = 0;
+        if (mr.list != null) {
+          for (var i = 0; i < mr.list.length; i++) {
+            if ((mr.list[i]["slot"]).contains("L")) {
+              labs++;
+            } else {
+              theory++;
+            }
+          }
+          labs = labs ~/ 2;
+        }
+        return Container(
+          width: width,
+          child: Stack(
+            children: <Widget>[
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    mr.day,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 33,
+                child: Row(
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Container(
+                          padding: EdgeInsets.only(left: 20, right: 5),
+                          child: Texts(theory.toString() + " Theory ", 15),
+                        ),
+                        Icon(
+                          FontAwesomeIcons.bookOpen,
+                          size: 16,
+                          color: Colors.lightBlue,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            Container(
+                              padding: EdgeInsets.only(left: 5, right: 5),
+                              child: Texts(
+                                  "  |  " + labs.toString() + " Lab(s) ", 15),
+                            ),
+                            Icon(
+                              FontAwesomeIcons.laptopCode,
+                              size: 16,
+                              color: Colors.lightBlue,
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                top: 41,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: EdgeInsets.all(10),
+                  height: height / 1.32,
+                  width: width,
+                  child: minimar(mr.list),
+                ),
+              ),
+            ],
+            overflow: Overflow.visible,
+          ),
+        );
+      },
+    ).toList();
   }
 }
