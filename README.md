@@ -34,7 +34,7 @@ VITask mobile application made for the students of VIT Chennai for their VTOP lo
 * `git add .`
 * `git commit -m"<Describe your changes>"`
 * `git push`
-* After committing your changes, make Pull Request.
+*  Make pull request after committing your changes.
 
 ## Our Team
 Mayank | Abhishek
